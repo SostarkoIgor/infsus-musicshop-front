@@ -1,6 +1,4 @@
-
-export class Product {
-    id?: number;
+export class ProductUpdateCreateDto {
     name!: string;
     description!: string;
     image!: string;

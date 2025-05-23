@@ -1,6 +1,5 @@
-
-export class Product {
-    id?: number;
+export class ProductGetDto {
+    id!: number;
     name!: string;
     description!: string;
     image!: string;

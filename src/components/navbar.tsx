@@ -6,11 +6,11 @@ const Navbar = () => {
     <div className={styles.navbar}>
         <div className={styles.logo}>
             <span className={'material-symbols-outlined ' + styles.logoIcon}>music_note</span>
-            <Link to="/" className={styles.logoText}>Music shop</Link>
+            <a href="/" className={styles.logoText}>Music shop</a>
         </div>
         <div className={styles.links}>
-            <Link to="/order" className={styles.link}>Orders</Link>
-            <Link to="/product" className={styles.link}>Products</Link>
+            <a href="/order" className={styles.link}>Orders</a>
+            <a href="/product" className={styles.link}>Products</a>
         </div>
     </div>
   );
