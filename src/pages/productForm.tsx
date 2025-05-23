@@ -1,6 +1,6 @@
 import React from "react";
 import { Product } from "../types/product";
-import styles from "../styles/productForm.module.css";
+import styles from "../styles/styles.module.css";
 import { useParams } from "react-router-dom";
 import { getProductById } from "../services/productService";
 import { getAllCategories } from "../services/categoryService";
@@ -8,12 +8,14 @@ import { Category } from "../types/category";
 import { updateProduct } from "../services/productService";
 import { useNavigate } from "react-router-dom";
 import { deleteProduct } from "../services/productService";
+import Loader from "../components/loader";
 
 function ProductForm(){
 
     const { id } = useParams();
     const [product, setProduct] = React.useState<Product>(new Product());
-    const [loading, setLoading] = React.useState(true);
+    const [loading, setLoading] = React.useState<boolean>(true);
+    const [loading2, setLoading2] = React.useState<boolean>(true);
 
     const [categories, setCategories] = React.useState<Category[]>([])
 
@@ -61,23 +63,26 @@ function ProductForm(){
             else {
                 setProduct(new Product());
             }
+            setLoading(false);
+            
         };
         const fetchCategories = async () => {
             try {
                 const categories: Category[] = await getAllCategories();
                 setCategories(categories);
-                setLoading(false);
             } catch (error) {
                 setError("Failed to fetch categories");
-                setLoading(false);
             }
+            setLoading2(false);
+            
         };
-        fetchCategories();
         fetchProduct();
+        fetchCategories();
+        
     }, [id]);
 
-    if (loading) {
-        return <div className={styles.loading}>Loading...</div>;
+    if (loading || loading2) {
+        return <div className={styles.loading}><Loader /></div>;
     }
     return (
         <div className={styles.container}>
@@ -95,9 +100,10 @@ function ProductForm(){
                 </button>
             </div>
             <form className={styles.form} onSubmit={submitForm}>
+                <div className={styles.formContent}>
                 <div className={styles.formElement}>
                     <label className={styles.label}>
-                        Product Name: {id}
+                        Product Name:
                     </label>
                     <input type="text" name="productName" value={product?.name} onChange={(e) => setProduct({ ...product, name: e.target.value })} className={styles.input} />
                 </div>
@@ -136,6 +142,7 @@ function ProductForm(){
                         Times Visited:
                     </label>
                     <input type="number" name="timesVisited" value={product?.times_visited} onChange={(e) => setProduct({ ...product, times_visited: Number(e.target.value) })} className={styles.input} />
+                </div>
                 </div>
                 <div className={styles.buttons}>
                     <button type="submit" className={styles.button + " " + styles.save}>

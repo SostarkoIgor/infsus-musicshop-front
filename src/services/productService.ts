@@ -32,8 +32,20 @@ export const updateProduct = async (product: Product): Promise<Product> => {
         times_visited: product.times_visited,
         category_id: product.category_id
     }
-    const response = await api.put<Product>(path+`products/product/${product.id}`, productUpdateCreateDto);
-    return response.data;
+    const response = await api.put<ProductGetDto>(path+`products/product/${product.id}`, productUpdateCreateDto);
+    if (response.status !== 200) {
+        throw new Error("Failed to update product");
+    }
+    const updatedProduct: Product = {
+        id: response.data.id,
+        name: response.data.name,
+        description: response.data.description,
+        image: response.data.image,
+        price: response.data.price,
+        times_visited: response.data.times_visited,
+        category_id: response.data.category_id
+    }
+    return updatedProduct;
 }
 
 export const createProduct = async (product: Product): Promise<Product> => {
@@ -45,8 +57,20 @@ export const createProduct = async (product: Product): Promise<Product> => {
         times_visited: product.times_visited,
         category_id: product.category_id
     }
-    const response = await api.post<Product>(path+`products/product`, productUpdateCreateDto);
-    return response.data;
+    const response = await api.post<ProductGetDto>(path+`products/product`, productUpdateCreateDto);
+    if (response.status !== 200) {
+        throw new Error("Failed to update product");
+    }
+    const updatedProduct: Product = {
+        id: response.data.id,
+        name: response.data.name,
+        description: response.data.description,
+        image: response.data.image,
+        price: response.data.price,
+        times_visited: response.data.times_visited,
+        category_id: response.data.category_id
+    }
+    return updatedProduct;
 }
 
 export const deleteProduct = async (id: number): Promise<void> => {
