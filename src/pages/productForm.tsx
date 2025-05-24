@@ -52,7 +52,11 @@ function ProductForm(){
         if (id) {
             try {
                 await deleteProduct(Number(id));
+                setIdToSearch("");
+                setError(null);
                 navigate("/product");
+                window.location.reload();
+                setProduct(new Product());
             } catch (error) {
                 setError("Failed to delete product");
             }
@@ -67,6 +71,8 @@ function ProductForm(){
                     setProduct(product);
                 } catch (error) {
                     setError("Failed to fetch product");
+                    setLoading(false);
+                    navigate("/not-found");
                     setProduct(new Product());
                 }
             }
@@ -161,6 +167,7 @@ function ProductForm(){
                         <span className={"material-symbols-outlined " + styles.saveIcon}>save</span>
                         <span>Save</span>
                     </button>
+                    { id && <>
                     <button type="button" className={styles.button + " " + styles.delete} onClick={deleteAction}>
                         <span className={"material-symbols-outlined " + styles.deleteIcon}>delete</span>
                         <span>Delete</span>
@@ -169,6 +176,7 @@ function ProductForm(){
                         <span className={"material-symbols-outlined " + styles.createIcon}>create</span>
                         <span>Create new</span>
                     </button>
+                    </>}
                 </div>
 
             </form>

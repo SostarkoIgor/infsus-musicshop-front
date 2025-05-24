@@ -16,8 +16,8 @@ function App() {
             <Route path="/product" element={<ProductForm />} />
             <Route path="/product/:id" element={<ProductForm />} />
             <Route path="/order/:id" element={<MasterDetail />} />
+            <Route path="/*" element={<h1>404 Not Found</h1>} />
           </Route>
-          <Route path="/*" element={<h1>404 Not Found</h1>} />
         </Routes>
       </BrowserRouter>
     </>

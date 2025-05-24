@@ -80,6 +80,7 @@ export const updateOrder = async (order: Order): Promise<Order> => {
             price: item.price
         }))
     }
+    console.log(orderDto);
     const response = await api.put<OrderGetDto>(`order/${order.id}`, orderDto);
     if (response.status !== 200) {
         throw new Error("Failed to update order");

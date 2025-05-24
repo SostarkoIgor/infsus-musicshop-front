@@ -10,6 +10,7 @@ import Loader from "../components/loader";
 import { createOrder, updateOrder } from "../services/orderService";
 import { getAllProducts } from "../services/productService";
 import { Product } from "../types/product";
+import { deleteOrderItem, createOrUpdateOrderItem } from "../services/orderItemService";
 
 function orderForm(){
   const { id } = useParams();
@@ -20,6 +21,8 @@ function orderForm(){
   const [loading2, setLoading2] = React.useState<boolean>(true);
   const [error, setError] = React.useState<string | null>(null);
 
+  const [selectedItem, setSelectedItem] = React.useState<number | null>(null);
+
   const [products, setProducts] = React.useState<Product[]>([]);
 
   const [users, setUsers] = React.useState<User[]>([]);
@@ -28,7 +31,9 @@ function orderForm(){
 
   const [productId, setProductId] = React.useState<number>(0);
   const [quantity, setQuantity] = React.useState<number>(0);
-  const [price, setPrice] = React.useState<number>(0);
+
+  const [previousProductId, setPreviousOrderId] = React.useState<number | null>(null);
+  const [previousQuantity, setPreviousQuantity] = React.useState<number | null>(null);
   
   const submitForm = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
@@ -63,6 +68,14 @@ function orderForm(){
         }
   };
 
+    const handleDelete = async (id:number) => {
+        setError(null);
+        await deleteOrderItem({ orderId: order.id, productId: id, quantity: 0 })
+        const updatedOrder = await getOrderById(order.id);
+        setOrder(updatedOrder);
+    };
+        
+
   React.useEffect(() => {
         const fetchProducts = async () => {
             try {
@@ -71,6 +84,8 @@ function orderForm(){
                     setError("No products found. Please create a product first.");
                 }
                 setProducts(products);
+                setProductId(products[0].id!);
+                setQuantity(1);
             } catch (error) {
                 setError("Failed to fetch products");
             }
@@ -92,6 +107,7 @@ function orderForm(){
                 } catch (error) {
                     setError("Failed to fetch order");
                     setOrder(new Order());
+                    navigate("/not-found");
                 }
             }
             setLoading(false);
@@ -105,23 +121,26 @@ function orderForm(){
     const submitItemCreateForm = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         setError(null);
-        console.log("Submitting item create form", productId, quantity, price);
-        if (productId && quantity && price) {
-            const newItem = {
-                product_id: productId,
-                quantity: quantity,
-                price: price
-            };
-            let order_: Order = { ...order };
-            if (!order_.order_items) {
-                order_.order_items = [];
-            }
-            order_.order_items.push(newItem);
-            await updateOrder(order_);
-            setOrder(order_);
-            setProductId(0);
-            setQuantity(0);
-            setPrice(0);
+        if (productId && quantity) {
+            try {
+                const orderItem = {
+                    orderId: order.id,
+                    productId: productId,
+                    quantity: quantity
+                };
+                if (previousProductId !== productId)
+                    try{
+                    await deleteOrderItem({ orderId: order.id, productId: previousProductId || 0, quantity: previousQuantity || 0 });
+                    } catch (error) {}
+                await createOrUpdateOrderItem(orderItem);
+                setQuantity(1);
+                setSelectedItem(null);
+
+                const updatedOrder = await getOrderById(order.id);
+                setOrder(updatedOrder);
+            } catch (error) {
+                setError("Failed to create or update order item");
+        }
         } else {
             setError("Please fill in all fields");
         }
@@ -151,7 +170,7 @@ function orderForm(){
                     <label className={styles.label}>
                         Total price:
                     </label>
-                    <input type="text" name="orderName" value={order?.total_price} onChange={(e) => setOrder({ ...order, total_price: Number(e.target.value) })} className={styles.input} />
+                    <input type="number" name="orderName" value={order?.total_price} onChange={(e) => setOrder({ ...order, total_price: Number(e.target.value) })} className={styles.input} />
                 </div>
                 <div className={styles.formElement}>
                     <label className={styles.label}>
@@ -189,6 +208,7 @@ function orderForm(){
                         <span className={"material-symbols-outlined " + styles.saveIcon}>save</span>
                         <span>Save</span>
                     </button>
+                    { id && <>
                     <button type="button" className={styles.button + " " + styles.delete} onClick={deleteAction}>
                         <span className={"material-symbols-outlined " + styles.deleteIcon}>delete</span>
                         <span>Delete</span>
@@ -196,21 +216,26 @@ function orderForm(){
                     <button type="button" className={styles.button + " " + styles.create} onClick={() => {navigate("/order"); setLoading(true); setError(null);}}>	
                         <span className={"material-symbols-outlined " + styles.createIcon}>create</span>
                         <span>Create new</span>
-                    </button>
+                    </button></>
+                }
                 </div>
 
             </form>
+
+            {id &&
             <div className={styles.items}>
+                <h1 className={styles.title}>Order Items</h1>
                 <div className={styles.createItemContainer}>
+                    <h2 className={styles.createItemTitle}>{selectedItem ? "Update item" : "Add new item"}</h2>
                     <form className={styles.createItemForm} onSubmit={submitItemCreateForm}>
                         <div className={styles.createItemContent}>
                             <div className={styles.createItemElement}>
-                                <label className={styles.createItemLabel}>
+                                <label className={styles.label}>
                                     Product:
                                 </label>
                                 <select name="product" value={productId} onChange={(e) => {
                                     setProductId(Number(e.target.value));
-                                }} className={styles.createItemSelect}>
+                                }} className={styles.select}>
                                     {products.map((product) => (
                                         <option key={product.id} value={product.id}>
                                             {product.name}
@@ -219,38 +244,33 @@ function orderForm(){
                                 </select>
                             </div>
                             <div className={styles.createItemElement}>
-                                <label className={styles.createItemLabel}>
+                                <label className={styles.label}>
                                     Quantity:
                                 </label>
                                 <input type="number" name="quantity" value={quantity} onChange={(e) => {
                                     setQuantity(Number(e.target.value));
-                                }} className={styles.createItemInput}></input>
-                            </div>
-                            <div className={styles.createItemElement}>
-                                <label className={styles.createItemLabel}>
-                                    Price:
-                                </label>
-                                <input type="number" name="price" value={price} onChange={(e) => {
-                                    setPrice(Number(e.target.value));
-                                }} className={styles.createItemInput}></input>
+                                }} className={styles.input}></input>
                             </div>
                         </div>
                         <div className={styles.createItemButtons}>
-                            <button type="submit" className={styles.createItemButton + " " + styles.createItemSave}>
-                                <span className={"material-symbols-outlined " + styles.createItemSaveIcon}>save</span>
-                                <span>Save</span>
+                            <button type="submit" className={styles.button + " " + styles.save}>
+                                <span className={"material-symbols-outlined " + styles.createItemSaveIcon}>
+                                    {selectedItem ? "save" : "add_circle"}
+                                </span>
+                                <span>{selectedItem ? "Save" : "Add new"}</span>
                             </button>
                         </div>
                     </form>
                     
                 </div>
+                <h2 className={styles.itemsTitle}>Order Items List</h2>
                 {order?.order_items && order.order_items.length > 0 ? (
                     order.order_items.map((item) => (
-                        <div key={item.id} className={styles.item}>
+                        <div key={item.id} className={styles.itemContainer}>
                             <div className={styles.itemContent}>
                                 <div className={styles.itemElement}>
                                     <span className={styles.itemLabel}>Product:</span>
-                                    <span className={styles.itemValue}>{item.product_id}</span>
+                                    <span className={styles.itemValue}>{products.find((p) => p.id === item.product_id)?.name || item.product_id}</span>
                                 </div>
                                 <div className={styles.itemElement}>
                                     <span className={styles.itemLabel}>Quantity:</span>
@@ -258,8 +278,24 @@ function orderForm(){
                                 </div>
                                 <div className={styles.itemElement}>
                                     <span className={styles.itemLabel}>Price:</span>
-                                    <span className={styles.itemValue}>{item.price}</span>
+                                    <span className={styles.itemValue}>{item.price*item.quantity}</span>
                                 </div>
+                            </div>
+                            <div className={styles.buttons}>
+                                <button className={styles.button + " " + styles.edit} onClick={() => {
+                                    selectedItem === item.product_id ? setSelectedItem(null) : setSelectedItem(item.product_id);
+                                    setPreviousOrderId(item.product_id);
+                                    setPreviousQuantity(item.quantity);
+                                    setProductId(item.product_id);
+                                    setQuantity(item.quantity);
+                                }}>
+                                    <span className={"material-symbols-outlined " + styles.editIcon}>{selectedItem === item.product_id ? "close" : "edit" }</span>
+                                    <span>{selectedItem === item.product_id ? "Cancel" : "Edit"}</span>
+                                </button>
+                                <button className={styles.button + " " + styles.delete} onClick={() => {handleDelete(item.product_id || 0);}}>
+                                    <span className={"material-symbols-outlined " + styles.deleteIcon}>delete</span>
+                                    <span>Delete</span>
+                                </button>
                             </div>
                         </div>
                     ))
@@ -267,6 +303,7 @@ function orderForm(){
                     <div className={styles.noItems}>No items found</div>
                 )}
             </div>
+    }
         </div>
     );
 };
