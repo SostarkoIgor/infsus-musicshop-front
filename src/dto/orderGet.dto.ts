@@ -1,9 +1,43 @@
 
+
+class User{
+    id!: number;
+    firstName!: string;
+    lastName!: string;
+    username!: string;
+    email!: string;
+    phoneNumber!: string;
+    role!: string;
+}
+
+class Category{
+    id!: number;
+    name!: string;
+}
+class Product{
+    id!: number;
+    name!: string;
+    description!: string;
+    image!: string;
+    price!: number;
+    times_visited!: number;
+    category!: Category;
+}
+
+class OrderItem{
+    id!: number;
+    product!: Product;
+    price!: number;
+    quantity!: number;
+}
+
 export class OrderGetDto{
     id!: number;
-    user_id!: number;
-    total_price!: number;
-    credit_card_number!: string;
-    order_date!: string;
-    delivery_address!: string;
+    user!: User;
+    totalPrice!: number;
+    creditCardNumber!: string;
+    orderItemsList!: OrderItem[];
+    orderDate!: string;
+    deliveryAddress!: string;
 }
+

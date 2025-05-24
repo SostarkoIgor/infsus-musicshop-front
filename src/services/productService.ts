@@ -3,22 +3,19 @@ import { Product } from "../types/product";
 import { ProductUpdateCreateDto } from "../dto/productUpdateCreate.dto";
 import { ProductGetDto } from "../dto/productGet.dto";
 
-
-let path=import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL : "http://localhost:8080/api/";
 export const getProductById = async (id: number): Promise<Product> => {
-    const response = await api.get<ProductGetDto>(path+`products/product/${id}`);
+    const response = await api.get<ProductGetDto>(`product/${id}`);
     if (response.status !== 200) {
         throw new Error("Failed to fetch product");
     }
-    
     const product: Product = {
         id: response.data.id,
         name: response.data.name,
         description: response.data.description,
         image: response.data.image,
         price: response.data.price,
-        times_visited: response.data.times_visited,
-        category_id: response.data.category_id
+        times_visited: response.data.timesVisited,
+        category_id: response.data.category.id
     }
     return product;
 }
@@ -29,10 +26,12 @@ export const updateProduct = async (product: Product): Promise<Product> => {
         description: product.description,
         image: product.image,
         price: product.price,
-        times_visited: product.times_visited,
-        category_id: product.category_id
+        timesVisited: product.times_visited,
+        category: {
+            id: product.category_id
+        }
     }
-    const response = await api.put<ProductGetDto>(path+`products/product/${product.id}`, productUpdateCreateDto);
+    const response = await api.put<ProductGetDto>(`product/${product.id}`, productUpdateCreateDto);
     if (response.status !== 200) {
         throw new Error("Failed to update product");
     }
@@ -42,8 +41,8 @@ export const updateProduct = async (product: Product): Promise<Product> => {
         description: response.data.description,
         image: response.data.image,
         price: response.data.price,
-        times_visited: response.data.times_visited,
-        category_id: response.data.category_id
+        times_visited: response.data.timesVisited,
+        category_id: response.data.category.id
     }
     return updatedProduct;
 }
@@ -54,10 +53,12 @@ export const createProduct = async (product: Product): Promise<Product> => {
         description: product.description,
         image: product.image,
         price: product.price,
-        times_visited: product.times_visited,
-        category_id: product.category_id
+        timesVisited: product.times_visited,
+        category: {
+            id: product.category_id
+        }
     }
-    const response = await api.post<ProductGetDto>(path+`products/product`, productUpdateCreateDto);
+    const response = await api.post<ProductGetDto>(`product`, productUpdateCreateDto);
     if (response.status !== 200) {
         throw new Error("Failed to update product");
     }
@@ -67,13 +68,29 @@ export const createProduct = async (product: Product): Promise<Product> => {
         description: response.data.description,
         image: response.data.image,
         price: response.data.price,
-        times_visited: response.data.times_visited,
-        category_id: response.data.category_id
+        times_visited: response.data.timesVisited,
+        category_id: response.data.category.id
     }
     return updatedProduct;
 }
 
 export const deleteProduct = async (id: number): Promise<void> => {
-    await api.delete(path+`products/product/${id}`);
+    await api.delete(`product/${id}`);
 }
 
+export const getAllProducts = async (): Promise<Product[]> => {
+    const response = await api.get<ProductGetDto[]>(`product/all`);
+    if (response.status !== 200) {
+        throw new Error("Failed to fetch products");
+    }
+    const products: Product[] = response.data.map((product) => ({
+        id: product.id,
+        name: product.name,
+        description: product.description,
+        image: product.image,
+        price: product.price,
+        times_visited: product.timesVisited,
+        category_id: product.category.id
+    }));
+    return products;
+}

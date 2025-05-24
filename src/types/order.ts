@@ -6,4 +6,12 @@ export class Order{
     credit_card_number!: string;
     order_date!: string;
     delivery_address!: string;
+    order_items: Item[] = []
+}
+
+class Item{
+    id?: number;
+    product_id!: number;
+    quantity!: number;
+    price!: number;
 }

@@ -7,6 +7,9 @@ import type { User } from "../types/user";
 import { getAllUsers } from "../services/userService";
 import { getOrderById, deleteOrder } from "../services/orderService";
 import Loader from "../components/loader";
+import { createOrder, updateOrder } from "../services/orderService";
+import { getAllProducts } from "../services/productService";
+import { Product } from "../types/product";
 
 function orderForm(){
   const { id } = useParams();
@@ -17,12 +20,36 @@ function orderForm(){
   const [loading2, setLoading2] = React.useState<boolean>(true);
   const [error, setError] = React.useState<string | null>(null);
 
+  const [products, setProducts] = React.useState<Product[]>([]);
+
   const [users, setUsers] = React.useState<User[]>([]);
 
   const [order, setOrder] = React.useState<Order>(new Order());
+
+  const [productId, setProductId] = React.useState<number>(0);
+  const [quantity, setQuantity] = React.useState<number>(0);
+  const [price, setPrice] = React.useState<number>(0);
   
   const submitForm = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
+        setError(null);
+        console.log("Submitting form", order);
+        try {
+            if (order) {
+                let order_: Order = { ...order };
+                if ((order_.user_id === undefined || order_.user_id === null) && users.length > 0) {
+                    order_.user_id = users[0].id;
+                }
+                if (id) {
+                    await updateOrder(order_);
+                } else {
+                    let order__: Order = await createOrder(order_);
+                    navigate("/order" + `/${order__.id}`);
+                }
+            }
+        } catch (error) {
+            setError("Failed to update order");
+        }
   };
 
   const deleteAction = async () => {
@@ -37,6 +64,17 @@ function orderForm(){
   };
 
   React.useEffect(() => {
+        const fetchProducts = async () => {
+            try {
+                const products = await getAllProducts();
+                if (products.length === 0) {
+                    setError("No products found. Please create a product first.");
+                }
+                setProducts(products);
+            } catch (error) {
+                setError("Failed to fetch products");
+            }
+            }
         const fetchUsers = async () => {
             try {
                 const users: User[] = await getAllUsers();
@@ -60,8 +98,34 @@ function orderForm(){
         };
         fetchUsers();
         fetchOrder();
+        fetchProducts();
 
     }, [id]);
+
+    const submitItemCreateForm = async (event: React.FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+        setError(null);
+        console.log("Submitting item create form", productId, quantity, price);
+        if (productId && quantity && price) {
+            const newItem = {
+                product_id: productId,
+                quantity: quantity,
+                price: price
+            };
+            let order_: Order = { ...order };
+            if (!order_.order_items) {
+                order_.order_items = [];
+            }
+            order_.order_items.push(newItem);
+            await updateOrder(order_);
+            setOrder(order_);
+            setProductId(0);
+            setQuantity(0);
+            setPrice(0);
+        } else {
+            setError("Please fill in all fields");
+        }
+    }
 
   if (loading || loading2) {
         return <div className={styles.loading}><Loader /> </div>;
@@ -93,13 +157,13 @@ function orderForm(){
                     <label className={styles.label}>
                         Credit card number:
                     </label>
-                    <input type="number" name="price" value={order?.credit_card_number} onChange={(e) => setOrder({ ...order, credit_card_number: e.target.value })} className={styles.input} />
+                    <input type="text" name="price" value={order?.credit_card_number} onChange={(e) => setOrder({ ...order, credit_card_number: e.target.value })} className={styles.input} />
                 </div>
                 <div className={styles.formElement}>
                     <label className={styles.label}>
                         Order date:
                     </label>
-                    <input type="date" name="description" value={order?.order_date} onChange={(e) => setOrder({ ...order, order_date: e.target.value })} className={styles.textarea}></input>
+                    <input type="date" name="description" value={ order?.order_date?new Date(order?.order_date).toISOString().split("T")[0]:new Date().toISOString().split("T")[0]} onChange={(e) => setOrder({ ...order, order_date: new Date(e.target.value).toISOString().replace("Z", "+00:00") })} className={styles.textarea}></input>
                 </div>
                 <div className={styles.formElement}>
                     <label className={styles.label}>
@@ -136,6 +200,73 @@ function orderForm(){
                 </div>
 
             </form>
+            <div className={styles.items}>
+                <div className={styles.createItemContainer}>
+                    <form className={styles.createItemForm} onSubmit={submitItemCreateForm}>
+                        <div className={styles.createItemContent}>
+                            <div className={styles.createItemElement}>
+                                <label className={styles.createItemLabel}>
+                                    Product:
+                                </label>
+                                <select name="product" value={productId} onChange={(e) => {
+                                    setProductId(Number(e.target.value));
+                                }} className={styles.createItemSelect}>
+                                    {products.map((product) => (
+                                        <option key={product.id} value={product.id}>
+                                            {product.name}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className={styles.createItemElement}>
+                                <label className={styles.createItemLabel}>
+                                    Quantity:
+                                </label>
+                                <input type="number" name="quantity" value={quantity} onChange={(e) => {
+                                    setQuantity(Number(e.target.value));
+                                }} className={styles.createItemInput}></input>
+                            </div>
+                            <div className={styles.createItemElement}>
+                                <label className={styles.createItemLabel}>
+                                    Price:
+                                </label>
+                                <input type="number" name="price" value={price} onChange={(e) => {
+                                    setPrice(Number(e.target.value));
+                                }} className={styles.createItemInput}></input>
+                            </div>
+                        </div>
+                        <div className={styles.createItemButtons}>
+                            <button type="submit" className={styles.createItemButton + " " + styles.createItemSave}>
+                                <span className={"material-symbols-outlined " + styles.createItemSaveIcon}>save</span>
+                                <span>Save</span>
+                            </button>
+                        </div>
+                    </form>
+                    
+                </div>
+                {order?.order_items && order.order_items.length > 0 ? (
+                    order.order_items.map((item) => (
+                        <div key={item.id} className={styles.item}>
+                            <div className={styles.itemContent}>
+                                <div className={styles.itemElement}>
+                                    <span className={styles.itemLabel}>Product:</span>
+                                    <span className={styles.itemValue}>{item.product_id}</span>
+                                </div>
+                                <div className={styles.itemElement}>
+                                    <span className={styles.itemLabel}>Quantity:</span>
+                                    <span className={styles.itemValue}>{item.quantity}</span>
+                                </div>
+                                <div className={styles.itemElement}>
+                                    <span className={styles.itemLabel}>Price:</span>
+                                    <span className={styles.itemValue}>{item.price}</span>
+                                </div>
+                            </div>
+                        </div>
+                    ))
+                ) : (
+                    <div className={styles.noItems}>No items found</div>
+                )}
+            </div>
         </div>
     );
 };

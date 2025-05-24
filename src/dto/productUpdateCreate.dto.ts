@@ -3,6 +3,8 @@ export class ProductUpdateCreateDto {
     description!: string;
     image!: string;
     price!: number;
-    times_visited!: number;
-    category_id!: number;
+    timesVisited!: number;
+    category!:{
+        id: number
+    }
 }

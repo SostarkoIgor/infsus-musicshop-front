@@ -7,7 +7,7 @@ import { getAllCategories } from "../services/categoryService";
 import { Category } from "../types/category";
 import { updateProduct } from "../services/productService";
 import { useNavigate } from "react-router-dom";
-import { deleteProduct } from "../services/productService";
+import { deleteProduct, createProduct } from "../services/productService";
 import Loader from "../components/loader";
 
 function ProductForm(){
@@ -28,9 +28,19 @@ function ProductForm(){
     const submitForm = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         setError(null);
+        console.log("Submitting form", product);
         try {
             if (product) {
-                await updateProduct(product);
+                let product_: Product = { ...product };
+                if ((product_.category_id === undefined || product_.category_id === null) && categories.length > 0) {
+                    product_.category_id=categories[0].id;
+                }
+                if (id)
+                    await updateProduct(product_);
+                else{
+                    let product__: Product = await createProduct(product_);
+                    navigate("/product"+`/${product__.id}`);
+                }
             }
         } catch (error) {
             setError("Failed to update product");
@@ -42,7 +52,7 @@ function ProductForm(){
         if (id) {
             try {
                 await deleteProduct(Number(id));
-                navigate("/products");
+                navigate("/product");
             } catch (error) {
                 setError("Failed to delete product");
             }
@@ -74,6 +84,8 @@ function ProductForm(){
                 setError("Failed to fetch categories");
             }
             setLoading2(false);
+
+            
             
         };
         fetchProduct();
