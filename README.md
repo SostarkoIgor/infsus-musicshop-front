@@ -1,54 +1,33 @@
-# React + TypeScript + Vite
+Frontend za treću zadaću iz kolegija informacijski sustavi
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Izrađeno u Reactu s TypeScriptom.
 
-Currently, two official plugins are available:
+## Lokalno pokretanje
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+Potrebno imati instalirano
 
-## Expanding the ESLint configuration
+- [Node.js](https://nodejs.org/) (verzija 18 ili novija)
+- [npm](https://www.npmjs.com/) ili [Yarn](https://yarnpkg.com/)
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### Instalacija paketa
 
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+```bash
+npm install
+# ili
+yarn install
+
+```
+### Pokretanje aplikacije
+```bash
+npm run dev
+# ili
+yarn dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+pokreće se na http://localhost:5173/ (ili drugi port ako je ovaj zauzet)
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-})
-```
+![app5](https://github.com/user-attachments/assets/a953e321-249f-4163-a8a1-e1d3ebfb0340)
+![app4](https://github.com/user-attachments/assets/e78d3530-54a5-43f0-8ad3-2fe53c29536f)
+![app3](https://github.com/user-attachments/assets/d234523b-e931-4d18-80b5-cf4df599941a)
+![app2](https://github.com/user-attachments/assets/a2290d5c-ce97-429b-9212-025a80107e98)
+![app1](https://github.com/user-attachments/assets/cf4847a0-3fdb-411d-b7fa-75870064d8ea)
