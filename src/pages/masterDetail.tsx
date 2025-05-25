@@ -153,6 +153,12 @@ function orderForm(){
     const submitItemCreateForm = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         setError(null);
+        if (quantity <= 0) {
+            setFieldErrors({ quantity: "Quantity must be greater than 0" });
+            return;
+        } else {
+            setFieldErrors({});
+        }
         if (productId && quantity) {
             try {
                 const orderItem = {
@@ -303,6 +309,7 @@ function orderForm(){
                                 <span>{selectedItem ? "Save" : "Add new"}</span>
                             </button>
                         </div>
+                        {fieldErrors.quantity && <div className={styles.error}>{fieldErrors.quantity}</div>}
                     </form>
                     
                 </div>
