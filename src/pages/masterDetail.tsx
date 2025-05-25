@@ -21,6 +21,8 @@ function orderForm(){
   const [loading2, setLoading2] = React.useState<boolean>(true);
   const [error, setError] = React.useState<string | null>(null);
 
+  const [fieldErrors, setFieldErrors] = React.useState<{ [key: string]: string }>({});
+
   const [selectedItem, setSelectedItem] = React.useState<number | null>(null);
 
   const [products, setProducts] = React.useState<Product[]>([]);
@@ -35,27 +37,57 @@ function orderForm(){
   const [previousProductId, setPreviousOrderId] = React.useState<number | null>(null);
   const [previousQuantity, setPreviousQuantity] = React.useState<number | null>(null);
   
+  const validateOrder = () => {
+        const errors: { [key: string]: string } = {};
+        const maskedCardRegex = /^\*{4}\d{4}$/;
+        if (!maskedCardRegex.test(order.credit_card_number || "")) {
+            errors.credit_card_number = "Credit card number must be in format ****1234.";
+        }
+
+        if (!order.delivery_address || order.delivery_address.trim() === "") {
+            errors.delivery_address = "Delivery address is required.";
+        }
+
+        const now = new Date();
+
+        const orderDate = new Date(order.order_date || "");
+        if (!order.order_date || isNaN(orderDate.getTime())) {
+            errors.order_date = "Order date must be valid.";
+        } else if (orderDate > now) {
+            errors.order_date = "Order date cannot be in the future.";
+        }
+
+        return errors;
+    };
+
   const submitForm = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         setError(null);
-        console.log("Submitting form", order);
+
+        const validationErrors = validateOrder();
+        setFieldErrors(validationErrors);
+
+        if (Object.keys(validationErrors).length > 0) {
+            return;
+        }
+
         try {
-            if (order) {
-                let order_: Order = { ...order };
-                if ((order_.user_id === undefined || order_.user_id === null) && users.length > 0) {
-                    order_.user_id = users[0].id;
-                }
-                if (id) {
-                    await updateOrder(order_);
-                } else {
-                    let order__: Order = await createOrder(order_);
-                    navigate("/order" + `/${order__.id}`);
-                }
+            let order_: Order = { ...order };
+            if ((order_.user_id === undefined || order_.user_id === null) && users.length > 0) {
+                order_.user_id = users[0].id;
+            }
+
+            if (id) {
+                await updateOrder(order_);
+            } else {
+                let order__: Order = await createOrder(order_);
+                navigate("/order" + `/${order__.id}`);
             }
         } catch (error) {
             setError("Failed to update order");
         }
-  };
+    };
+
 
   const deleteAction = async () => {
         if (id) {
@@ -63,7 +95,7 @@ function orderForm(){
                 await deleteOrder(Number(id));
                 navigate("/order");
             } catch (error) {
-                setError("Failed to delete order");
+                setError("Failed to delete order:"+ error);
             }
         }
   };
@@ -128,7 +160,7 @@ function orderForm(){
                     productId: productId,
                     quantity: quantity
                 };
-                if (previousProductId !== productId)
+                if (previousProductId !== productId && selectedItem)
                     try{
                     await deleteOrderItem({ orderId: order.id, productId: previousProductId || 0, quantity: previousQuantity || 0 });
                     } catch (error) {}
@@ -151,13 +183,15 @@ function orderForm(){
   }
   return (
         <div className={styles.container}>
-            <div className={styles.error}>{error}</div>
+            <h1 className={styles.title}>{id ? "Edit Order" : "Create Order"}</h1>
             <div className={styles.searchContainer}>
                 <input type="text" className={styles.input} value={idToSearch} onChange={(e) => setIdToSearch(e.target.value)} placeholder="Search by id..." />
                 <button className={styles.button} onClick={() => {
                     if (idToSearch) {
+                        if (idToSearch !== id)
                         setLoading(true);
                         setError(null);
+                        setFieldErrors({});
                         navigate(`/order/${idToSearch}`);
                     }}}>
                     <span className={"material-symbols-outlined " + styles.deleteIcon}>search</span>
@@ -170,19 +204,25 @@ function orderForm(){
                     <label className={styles.label}>
                         Total price:
                     </label>
-                    <input type="number" name="orderName" value={order?.total_price} onChange={(e) => setOrder({ ...order, total_price: Number(e.target.value) })} className={styles.input} />
+                    <input type="text" name="price" readOnly value={
+                        order?.order_items?.reduce((acc, item) => acc + (item.price * item.quantity), 0).toFixed(2) || 0
+                    } onChange={(e) => setOrder({ ...order, total_price: Number(e.target.value) })} className={styles.input} />
                 </div>
                 <div className={styles.formElement}>
                     <label className={styles.label}>
                         Credit card number:
                     </label>
                     <input type="text" name="price" value={order?.credit_card_number} onChange={(e) => setOrder({ ...order, credit_card_number: e.target.value })} className={styles.input} />
+                    {fieldErrors.credit_card_number && <div className={styles.error}>{fieldErrors.credit_card_number}</div>}
+
                 </div>
                 <div className={styles.formElement}>
                     <label className={styles.label}>
                         Order date:
                     </label>
                     <input type="date" name="description" value={ order?.order_date?new Date(order?.order_date).toISOString().split("T")[0]:new Date().toISOString().split("T")[0]} onChange={(e) => setOrder({ ...order, order_date: new Date(e.target.value).toISOString().replace("Z", "+00:00") })} className={styles.textarea}></input>
+                    {fieldErrors.order_date && <div className={styles.error}>{fieldErrors.order_date}</div>}
+
                 </div>
                 <div className={styles.formElement}>
                     <label className={styles.label}>
@@ -200,7 +240,9 @@ function orderForm(){
                     <label className={styles.label}>
                         Delivery address:
                     </label>
-                    <input type="text" name="image" value={order?.delivery_address} onChange={(e) => setOrder({ ...order, delivery_address: e.target.value })} className={styles.input} />
+                    <input type="text" name="address" value={order?.delivery_address} onChange={(e) => setOrder({ ...order, delivery_address: e.target.value })} className={styles.input} />
+                    {fieldErrors.delivery_address && <div className={styles.error}>{fieldErrors.delivery_address}</div>}
+
                 </div>
                 </div>
                 <div className={styles.buttons}>
@@ -213,7 +255,7 @@ function orderForm(){
                         <span className={"material-symbols-outlined " + styles.deleteIcon}>delete</span>
                         <span>Delete</span>
                     </button>
-                    <button type="button" className={styles.button + " " + styles.create} onClick={() => {navigate("/order"); setLoading(true); setError(null);}}>	
+                    <button type="button" className={styles.button + " " + styles.create} onClick={() => {navigate("/order"); setLoading(true); setError(null); window.location.reload();}}>	
                         <span className={"material-symbols-outlined " + styles.createIcon}>create</span>
                         <span>Create new</span>
                     </button></>
@@ -221,6 +263,7 @@ function orderForm(){
                 </div>
 
             </form>
+            <div className={styles.error}>{error}</div>
 
             {id &&
             <div className={styles.items}>
@@ -278,7 +321,7 @@ function orderForm(){
                                 </div>
                                 <div className={styles.itemElement}>
                                     <span className={styles.itemLabel}>Price:</span>
-                                    <span className={styles.itemValue}>{item.price*item.quantity}</span>
+                                    <span className={styles.itemValue}>{(item.price*item.quantity).toFixed(2)}</span>
                                 </div>
                             </div>
                             <div className={styles.buttons}>

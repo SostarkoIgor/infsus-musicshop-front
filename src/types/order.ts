@@ -4,7 +4,7 @@ export class Order{
     user_id!: number;
     total_price!: number;
     credit_card_number!: string;
-    order_date!: string;
+    order_date: string = new Date().toISOString().split("T")[0];
     delivery_address!: string;
     order_items: Item[] = []
 }

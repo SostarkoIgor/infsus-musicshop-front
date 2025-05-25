@@ -5,9 +5,8 @@ import type { OrderUpdateCreateDto } from "../dto/orderUpdateCreate.dto";
 
 export const getOrderById = async (id: number): Promise<Order> => {
     const response = await api.get<OrderGetDto>(`order/${id}`);
-    console.log(response.data);
     if (response.status !== 200) {
-        throw new Error("Failed to fetch order");
+        throw new Error("Failed to fetch order:"+ response.statusText);
     }
     let order: Order = {
         id: response.data.id,
@@ -43,7 +42,7 @@ export const createOrder = async (order: Order): Promise<Order> => {
     }
     const response = await api.post<OrderGetDto>(`order`, orderDto);
     if (response.status !== 200) {
-        throw new Error("Failed to create order");
+        throw new Error("Failed to create order: "+ response.statusText);
     }
     const createdOrder: Order = {
         id: response.data.id,
@@ -80,10 +79,9 @@ export const updateOrder = async (order: Order): Promise<Order> => {
             price: item.price
         }))
     }
-    console.log(orderDto);
     const response = await api.put<OrderGetDto>(`order/${order.id}`, orderDto);
     if (response.status !== 200) {
-        throw new Error("Failed to update order");
+        throw new Error("Failed to update order:"+ response.statusText);
     }
     const updatedOrder: Order = {
         id: response.data.id,
